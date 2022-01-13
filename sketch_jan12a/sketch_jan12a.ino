@@ -5,11 +5,11 @@
 #define PDM_SOUND_GAIN    255    // sound gain of PDM mic
 #define PDM_BUFFER_SIZE   256    // buffer size of PDM mic
 
-#define SAMPLE_THRESHOLD  900    // RMS threshold to trigger sampling
+#define SAMPLE_THRESHOLD  1000    // RMS threshold to trigger sampling
 #define FEATURE_SIZE      32     // sampling size of one voice instance
 #define SAMPLE_DELAY      20     // delay time (ms) between sampling
 
-#define TOTAL_SAMPLE      50     // total number of voice instance
+#define TOTAL_SAMPLE      5000     // total number of voice instance
 
 
 double feature_data[FEATURE_SIZE];
@@ -40,7 +40,7 @@ void setup() {
   PDM.setBufferSize(PDM_BUFFER_SIZE);
   PDM.setGain(PDM_SOUND_GAIN);
 
-  if (!PDM.begin(1, 16000)) {  // start PDM mic and sampling at 16 KHz
+  if (!PDM.begin(1, 16000)) {
     Serial.println("Failed to start PDM!");
     while (1);
   }
@@ -55,6 +55,7 @@ void setup() {
 void loop() {
   while (rms < SAMPLE_THRESHOLD);
   digitalWrite(LED_BUILTIN, HIGH);
+  Serial.print('<');
   for (unsigned short i = 0; i < FEATURE_SIZE; i++) {
     while (rms < 0);
     feature_data[i] = rms;
@@ -70,22 +71,12 @@ void loop() {
     } else {
       Serial.print(',');
     }    
-  }  
+  }
+  Serial.print('>');  
   digitalWrite(LED_BUILTIN, LOW);
 
   total_counter++;
   if (total_counter >= TOTAL_SAMPLE) {
-    PDM.end();
-    while (1) {
-      delay(100);
-      digitalWrite(LED_BUILTIN, HIGH);
-      delay(100);
-      digitalWrite(LED_BUILTIN, LOW);
-    }
+    PDM.end();    
   }
-  
-  //delay(900);
-  //digitalWrite(LED_BUILTIN, HIGH);
-  //delay(100);
-  //digitalWrite(LED_BUILTIN, LOW);
 }
