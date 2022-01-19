@@ -16,10 +16,11 @@ def receive_vector(start_marker, end_marker):
     try:
         v = msg.split(',')
         v = [int(item) for item in v]
-    except:
+    except Exception as e:
+        print(e)
         v = None
 
-    return v
+    return v, msg
 
 if __name__ == '__main__':
 
@@ -28,17 +29,21 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--rate', help='Baud rate', default=115200, type=int)
     parser.add_argument('-s', '--start', help='Start marker', default=60, type=int)
     parser.add_argument('-e', '--end', help='End marker', default=62, type=int)
-    parser.add_argument('-n', '--nvectors', help='Number of vectors to record', default=25, type=int)
-    parser.add_argument('-f', '--fpath', help='File path', default='data/yes.csv')
+    parser.add_argument('-n', '--nvectors', help='Number of vectors to record', default=10, type=int)
+    parser.add_argument('-f', '--fpath', help='File path', default='examples/yes.csv')
     args = parser.parse_args()
 
     ser = serial.Serial(args.port, args.rate)
     data = []
 
-    for i in range(args.nvectors):
-        x = receive_vector(args.start, args.end)
+    n = 0
+    while n < args.nvectors:
+        x, msg = receive_vector(args.start, args.end)
         if x is not None:
             data.append(x)
+            n += 1
+        else:
+            print(msg)
     ser.close()
 
     X = np.array(data)

@@ -24,16 +24,17 @@ def get_waveform_and_label(file_path):
     return waveform, label
 
 def get_spectrogram(waveform):
-    input_len = 16000
+    input_len = 15872
     waveform = waveform[:input_len]
     zero_padding = tf.zeros(
-        [16000] - tf.shape(waveform),
+        [15872] - tf.shape(waveform),
         dtype=tf.float32
     )
     waveform = tf.cast(waveform, dtype=tf.float32)
     equal_length = tf.concat([waveform, zero_padding], 0)
     spectrogram = tf.signal.stft(
-        equal_length, frame_length=255, frame_step=128
+        #equal_length, frame_length=255, frame_step=128
+        equal_length, frame_length = 512, frame_step = 512, fft_length=64,
     )
     spectrogram = tf.abs(spectrogram)
     spectrogram = spectrogram[..., tf.newaxis]
@@ -41,7 +42,7 @@ def get_spectrogram(waveform):
 
 def get_spectrogram_and_label_id(audio, label):
     spectrogram = get_spectrogram(audio)
-    spectrogram = tf.image.resize(spectrogram, size=(32, 32))
+    #spectrogram = tf.image.resize(spectrogram, size=(32, 32))
     label_id = tf.argmax(label == commands)
     return spectrogram, label_id
 
@@ -59,6 +60,8 @@ def preprocess_dataset(files):
 
 if __name__ == '__main__':
 
+    words = ['yes', 'no']
+
     seed = 42
     tf.random.set_seed(seed)
     np.random.seed(seed)
@@ -75,41 +78,38 @@ if __name__ == '__main__':
 
     commands = np.array(tf.io.gfile.listdir(str(data_dir)))
     commands = commands[commands != 'README.md']
+    commands = [c for c in commands if c in words]
     print('Commands:', commands)
+    with open('data/labels.txt', 'w') as f:
+        f.write(','.join(commands))
 
-    filenames = tf.io.gfile.glob(str(data_dir) + '/*/*')
+    filenames = []
+    for word in words:
+        filenames.extend(tf.io.gfile.glob(f'{str(data_dir)}/{word}/*'))
     filenames = tf.random.shuffle(filenames)
     num_samples = len(filenames)
     print('Number of total examples:', num_samples)
     print('Number of examples per label:', len(tf.io.gfile.listdir(str(data_dir / commands[0]))))
 
-    train_files = filenames[:6400]
-    val_files = filenames[6400: 6400 + 800]
-    test_files = filenames[-800:]
+    train_files = filenames[:int(0.4 * num_samples)]
+    val_files = filenames[int(0.4 * num_samples) : int(0.6 * num_samples)]
+    test_files = filenames[-int(0.4 * num_samples):]
 
     print('Training set size', len(train_files))
     print('Validation set size', len(val_files))
     print('Test set size', len(test_files))
 
-    test_file = tf.io.read_file(DATASET_PATH + '/down/0a9f9af7_nohash_0.wav')
-    test_audio, _ = tf.audio.decode_wav(contents=test_file)
-    print(test_audio.shape)
-
     AUTOTUNE = tf.data.AUTOTUNE
-    files_ds = tf.data.Dataset.from_tensor_slices(train_files)
-    waveform_ds = files_ds.map(
-        map_func=get_waveform_and_label,
-        num_parallel_calls=AUTOTUNE
-    )
 
-    spectrogram_ds = waveform_ds.map(
-        map_func=get_spectrogram_and_label_id,
-        num_parallel_calls=AUTOTUNE
-    )
-
-    train_ds = spectrogram_ds
+    train_ds = preprocess_dataset(train_files)
     val_ds = preprocess_dataset(val_files)
     test_ds = preprocess_dataset(test_files)
+
+    for spectrogram, l in train_ds.take(1):
+        input_shape = spectrogram.shape
+        break
+    print('Input shape:', input_shape)
+    num_labels = len(commands)
 
     batch_size = 64
     train_ds = train_ds.batch(batch_size)
@@ -118,23 +118,19 @@ if __name__ == '__main__':
     train_ds = train_ds.cache().prefetch(AUTOTUNE)
     val_ds = val_ds.cache().prefetch(AUTOTUNE)
 
-    for spectrogram, _ in spectrogram_ds.take(1):
-        input_shape = spectrogram.shape
-    print('Input shape:', input_shape)
-    num_labels = len(commands)
-
     # Training default model
-
-    norm_layer = layers.Normalization()
-    norm_layer.adapt(data=spectrogram_ds.map(map_func=lambda spec, label: spec))
 
     model = models.Sequential([
         layers.Input(shape=input_shape),
         #layers.Resizing(32, 32),
         #norm_layer,
-        layers.Conv2D(32, 3, activation='relu'),
-        layers.Conv2D(32, 3, activation='relu'),
-        layers.MaxPooling2D(),
+        #layers.Conv2D(32, 3, activation='relu'),
+        #layers.Conv2D(32, 3, activation='relu'),
+        layers.Flatten(),
+        layers.Dense(128, activation='relu'),
+        layers.Dropout(0.5),
+        layers.Dense(64, activation='relu'),
+        #layers.MaxPooling2D(),
         layers.Dropout(0.5),
         layers.Flatten(),
         layers.Dense(32, activation='relu'),
@@ -148,13 +144,11 @@ if __name__ == '__main__':
         metrics=['accuracy'],
     )
 
-    EPOCHS = 1
     history = model.fit(
         train_ds,
         validation_data=val_ds,
-        epochs=EPOCHS,
-        callbacks=tf.keras.callbacks.EarlyStopping(verbose=1, patience=10),
-        verbose=False
+        epochs=1000,
+        verbose=True
     )
 
     model.save('model')
@@ -197,53 +191,12 @@ if __name__ == '__main__':
         metrics=['accuracy']
     )
 
-    DATASET_PATH = 'data/mini_speech_commands'
-    data_dir = pathlib.Path(DATASET_PATH)
-    commands = np.array(tf.io.gfile.listdir(str(data_dir)))
-    commands = commands[commands != 'README.md']
-
-    filenames = tf.io.gfile.glob(str(data_dir) + '/*/*')
-    filenames = tf.random.shuffle(filenames)
-    num_samples = len(filenames)
-
-    train_files = filenames[:6400]
-    val_files = filenames[6400: 6400 + 800]
-    test_files = filenames[-800:]
-
-    AUTOTUNE = tf.data.AUTOTUNE
-    files_ds = tf.data.Dataset.from_tensor_slices(train_files)
-    waveform_ds = files_ds.map(
-        map_func=get_waveform_and_label,
-        num_parallel_calls=AUTOTUNE
-    )
-
-    spectrogram_ds = waveform_ds.map(
-        map_func=get_spectrogram_and_label_id,
-        num_parallel_calls=AUTOTUNE
-    )
-
-    train_ds = spectrogram_ds
-    val_ds = preprocess_dataset(val_files)
-    test_ds = preprocess_dataset(test_files)
-
-    batch_size = 64
-    train_ds = train_ds.batch(batch_size)
-    val_ds = val_ds.batch(batch_size)
-
-    train_ds = train_ds.cache().prefetch(AUTOTUNE)
-    val_ds = val_ds.cache().prefetch(AUTOTUNE)
-
-    for spectrogram, _ in spectrogram_ds.take(1):
-        input_shape = spectrogram.shape
-    num_labels = len(commands)
-
-    EPOCHS = 1000
     history = q_aware_model.fit(
         train_ds,
         validation_data=val_ds,
-        epochs=EPOCHS,
+        epochs=1000,
         callbacks=tf.keras.callbacks.EarlyStopping(verbose=1, patience=10),
-        verbose=False
+        verbose=True
     )
 
     q_aware_model.save('qa_model')
