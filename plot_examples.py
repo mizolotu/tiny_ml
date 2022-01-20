@@ -6,17 +6,22 @@ from train_model import get_spectrogram
 from matplotlib import pyplot as pp
 
 if __name__ == '__main__':
-    fname = 'yes.csv'
+    fname = 'test.csv'
     prefix = fname.split('.')[0]
     W = pd.read_csv(osp.join('examples', fname), header=None).values
     S = []
     for i, w in enumerate(W):
-        w = w / 32768
-        pp.plot(w)
+        print(w.shape)
+        #w = w / 32768
+        fig, axs = pp.subplots(31)
+        for j in range(31):
+            axs[j].plot(w[j * 33 : j * 33 + 33])
         pp.savefig(osp.join('figs', 'waveforms', f'{prefix}_{i}.pdf'))
         pp.close()
-        s = get_spectrogram(w)
-        S.append(s)
+
+        #s = get_spectrogram(w)
+        s = w.reshape(31, 33, 1)
+
         splot = np.squeeze(s, axis=-1)
         log_spec = np.log(splot.T + np.finfo(float).eps)
         height = log_spec.shape[0]

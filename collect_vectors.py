@@ -30,7 +30,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--start', help='Start marker', default=60, type=int)
     parser.add_argument('-e', '--end', help='End marker', default=62, type=int)
     parser.add_argument('-n', '--nvectors', help='Number of vectors to record', default=10, type=int)
-    parser.add_argument('-f', '--fpath', help='File path', default='examples/yes.csv')
+    parser.add_argument('-f', '--fpath', help='File path', default='examples/test.csv')
     args = parser.parse_args()
 
     ser = serial.Serial(args.port, args.rate)
@@ -40,6 +40,7 @@ if __name__ == '__main__':
     while n < args.nvectors:
         x, msg = receive_vector(args.start, args.end)
         if x is not None:
+            print(x)
             data.append(x)
             n += 1
         else:

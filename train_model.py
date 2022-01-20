@@ -21,6 +21,10 @@ def get_waveform_and_label(file_path):
     label = get_label(file_path)
     audio_binary = tf.io.read_file(file_path)
     waveform = decode_audio(audio_binary)
+
+    waveform = waveform * 127
+    waveform = tf.clip_by_value(waveform, -128, 127)
+
     return waveform, label
 
 def get_spectrogram(waveform):
