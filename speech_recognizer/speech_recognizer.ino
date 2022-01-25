@@ -14,9 +14,9 @@
 #define TOTAL_SAMPLE      10    // total number of voice instance
 
 
-char sample[FFT_SIZE * PDM_BUFFER_SIZE / 2];
-char im[FFT_SIZE * PDM_BUFFER_SIZE / 2];
-short fft_sample[FFT_FEATURES];
+short sample[FFT_SIZE * PDM_BUFFER_SIZE / 2];
+short im[FFT_SIZE * PDM_BUFFER_SIZE / 2];
+int fft_sample[FFT_FEATURES];
 short feature_vector[FEATURE_SIZE * FFT_FEATURES];
 unsigned int total_counter = 0;
 short sample_count = 0;
@@ -27,14 +27,14 @@ void onPDMdata() {
   int bytes_available = PDM.available();
   PDM.read(sample_buffer, bytes_available);
   for (unsigned short i = 0; i < (bytes_available / 2); i++) {
-    sample[sample_count * PDM_BUFFER_SIZE / 2 + i] = (sample_buffer[i] / 256);
+    sample[sample_count * PDM_BUFFER_SIZE / 2 + i] = sample_buffer[i];
     im[sample_count * PDM_BUFFER_SIZE / 2 + i] = 0;
   }
   
   fix_fft(sample, im, FFT_N, 0);
 
   for (unsigned short i = 0; i < FFT_FEATURES; i++) {
-    fft_sample[i] = (short)sqrt(sample[i] * sample[i] + im[i] * im[i]);
+    fft_sample[i] = sqrt(sample[i] * sample[i] + im[i] * im[i]);
   }
 
   sample_count = (sample_count + 1) % FFT_SIZE;

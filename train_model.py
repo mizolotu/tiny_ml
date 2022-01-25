@@ -22,8 +22,8 @@ def get_waveform_and_label(file_path):
     audio_binary = tf.io.read_file(file_path)
     waveform = decode_audio(audio_binary)
 
-    waveform = waveform * 127
-    waveform = tf.clip_by_value(waveform, -128, 127)
+    waveform = waveform * 32767
+    waveform = tf.clip_by_value(waveform, -32767, 32767)
 
     return waveform, label
 

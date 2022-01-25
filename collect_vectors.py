@@ -25,11 +25,11 @@ def receive_vector(start_marker, end_marker):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Parse args')
-    parser.add_argument('-p', '--port', help='Serial port', default='/dev/ttyACM0')
+    parser.add_argument('-p', '--port', help='Serial port', default='COM4') # /dev/ttyACM0
     parser.add_argument('-r', '--rate', help='Baud rate', default=115200, type=int)
     parser.add_argument('-s', '--start', help='Start marker', default=60, type=int)
     parser.add_argument('-e', '--end', help='End marker', default=62, type=int)
-    parser.add_argument('-n', '--nvectors', help='Number of vectors to record', default=10, type=int)
+    parser.add_argument('-n', '--nvectors', help='Number of vectors to record', default=1, type=int)
     parser.add_argument('-f', '--fpath', help='File path', default='examples/test.csv')
     args = parser.parse_args()
 

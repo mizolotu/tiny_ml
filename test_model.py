@@ -34,9 +34,10 @@ if __name__ == '__main__':
     pp.pcolormesh(X, Y, log_spec)
     pp.savefig('spectrogram.pdf')
 
-    # test
+    # yes
 
-    fname = 'test.csv'
+    print('Yes:\n')
+    fname = 'yes.csv'
     prefix = fname.split('.')[0]
     S = pd.read_csv(osp.join('examples', fname), header=None).values
     for i, s in enumerate(S):
@@ -45,25 +46,14 @@ if __name__ == '__main__':
         prediction = model.predict(s)
         print(i, np.argmax(prediction, axis=1)[0])
 
-    import sys
-    sys.exit(0)
+    # no
 
-    # yes
-
-    fname = 'yes.csv'
+    print('No:\n')
+    fname = 'no.csv'
     prefix = fname.split('.')[0]
-    W = pd.read_csv(osp.join('examples', fname), header=None).values
-    print(W.shape)
-    S = []
-    for i, w in enumerate(W):
-        #w = w / 32768
-        pp.plot(w)
-        pp.savefig(f'yes_{i}.pdf')
-        pp.close()
-        print(w.shape)
-        s = get_spectrogram(w)
-        print(s.shape)
-        #s = tf.image.resize(s, size=(32, 32))
+    S = pd.read_csv(osp.join('examples', fname), header=None).values
+    for i, s in enumerate(S):
+        s = tf.reshape(s, (31, 33))
         s = tf.expand_dims(s, 0)
         prediction = model.predict(s)
         print(i, np.argmax(prediction, axis=1)[0])
