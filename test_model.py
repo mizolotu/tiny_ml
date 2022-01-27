@@ -22,6 +22,7 @@ if __name__ == '__main__':
     pp.savefig('wave.pdf')
     pp.close()
     spectrogram = get_spectrogram(waveform)
+    print(spectrogram.shape)
 
     print(spectrogram.shape, np.min(spectrogram), np.max(spectrogram))
 
