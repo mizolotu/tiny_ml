@@ -12,10 +12,13 @@ from tensorflow.keras import layers
 from tensorflow.keras import models
 from ctypes import cdll, c_short, POINTER
 
-def get_waveform(file_path):
+def get_waveform(file_path, scale=256.0, xmin=-128, xmax=127):
     _, waveform = scipy.io.wavfile.read(file_path)
-    waveform = np.round(waveform)
-    waveform = np.clip(waveform, -32767, 32767)
+    waveform = np.round(waveform) // scale
+    #nwindows = waveform.shape[0] // wsize
+    #x = np.zeros(nwindows)
+    #for i in range(nwindows):
+    #    x[i] = np.clip(np.round(np.sum(waveform[i * wsize: (i + 1) * wsize])), xmin, xmax)
     return waveform
 
 def interval_fix_fft(w, step, m, n_fft_features, fpath='fix_fft_dll/fix_fft.so'):
@@ -36,12 +39,11 @@ def interval_fix_fft(w, step, m, n_fft_features, fpath='fix_fft_dll/fix_fft.so')
     mgn = map(fix_fft, intervals)
     return np.hstack(mgn)
 
-def get_spectrogram(waveform, input_len=15232):  # 15872
+def get_spectrogram(waveform, input_len=15232):
     waveform = waveform[:input_len]
     zero_padding = np.zeros(input_len - len(waveform))
     equal_length = np.hstack([waveform, zero_padding])
-    #spectrogram = interval_fix_fft(equal_length, 512, 6, 33)
-    spectrogram = interval_fix_fft(equal_length, 2176, 6, 33)
+    spectrogram = interval_fix_fft(equal_length, 544, 2, 3)
     return spectrogram
 
 def equalize_numbers(X, Y):
@@ -56,6 +58,9 @@ def equalize_numbers(X, Y):
 if __name__ == '__main__':
 
     labels = ['no', 'yes', 'other']
+    wscale = 256.0
+    wmin = -128
+    wmax = 127
 
     # seed
 
@@ -85,8 +90,8 @@ if __name__ == '__main__':
 
     # fpath
 
-    features_fpath = f'{DATASET_PATH}/features.csv'
-    minmax_fpath = f'{DATASET_PATH}/minmax.csv'
+    features_fpath = f'{DATASET_PATH}/features_uno.csv'
+    minmax_fpath = f'{DATASET_PATH}/minmax_uno.csv'
     silence_fpath = 'data/silence.csv'
 
     # preprocess data
@@ -94,9 +99,19 @@ if __name__ == '__main__':
     try:
         features_and_labels = pd.read_csv(features_fpath, header=None).values
     except Exception as e:
-        silence_features = pd.read_csv(silence_fpath, header=None).values
-        other_label = len(labels) - 1
-        features_and_labels = np.hstack([silence_features, other_label * np.ones((silence_features.shape[0], 1))]).tolist()
+
+        features_and_labels = []
+
+        print(f'Processing silence samples:')
+        samples = pd.read_csv(silence_fpath, header=None).values
+        label = len(labels) - 1
+        for sample in samples:
+            sample = sample / wscale
+            sample = np.clip(sample, wmin, wmax)
+            spectrogram = get_spectrogram(sample)
+            features_and_labels.append(np.hstack([spectrogram, label]))
+        print('Done!')
+
         for command in commands:
             if command in labels:
                 print(f'Processing "{command}" samples:')
@@ -104,7 +119,7 @@ if __name__ == '__main__':
                 samples = os.listdir(subdir)
                 for i, sample in enumerate(samples):
                     fpath = subdir.joinpath(sample)
-                    waveform = get_waveform(fpath)
+                    waveform = get_waveform(fpath, scale=wscale, xmin=wmin, xmax=wmax)
                     spectrogram = get_spectrogram(waveform)
                     label = labels.index(command)
                     features_and_labels.append(np.hstack([spectrogram, label]))
@@ -148,9 +163,9 @@ if __name__ == '__main__':
 
     model = models.Sequential([
         layers.Input(shape=(n_features,)),
-        layers.Dense(64, activation='relu'),
+        layers.Dense(16, activation='relu'),
         layers.Dropout(0.25),
-        layers.Dense(64, activation='relu'),
+        layers.Dense(16, activation='relu'),
         layers.Dropout(0.25),
 
         #layers.Reshape((31, 33, 1)),

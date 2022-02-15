@@ -6,7 +6,7 @@ from matplotlib import pyplot as pp
 
 if __name__ == '__main__':
 
-    fpath = 'data/mini_speech_commands/features.csv'
+    fpath = 'data/mini_speech_commands/features_nano.csv'
     S = pd.read_csv(fpath, header=None).values
     features, labels = S[:, :-1], S[:, -1]
     ulabels = np.unique(labels)

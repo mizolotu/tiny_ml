@@ -5,7 +5,7 @@ import pandas as pd
 if __name__ == '__main__':
 
     model = tf.keras.models.load_model('model')
-    minmax = pd.read_csv('data/mini_speech_commands/minmax.csv', header=None).values
+    minmax = pd.read_csv('data/mini_speech_commands/minmax_nano.csv', header=None).values
     output = 'nn/model_data.cpp'
 
     count = 0

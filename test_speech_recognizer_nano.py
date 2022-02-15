@@ -3,7 +3,7 @@ import os.path as osp
 import numpy as np
 import tensorflow as tf
 
-from train_model import get_spectrogram
+from train_speech_recognizer_nano import get_spectrogram
 from matplotlib import pyplot as pp
 
 def relu(x):
