@@ -53,6 +53,26 @@ if __name__ == '__main__':
     ntr = len(tr)
     nva = len(va)
 
-    model = 
-    model.summary()
+    clf = ak.AutoModel(
+        inputs=[ak.StructuredDataInput(), ak.StructuredDataInput(), ak.StructuredDataInput()],
+        outputs=ak.ClassificationHead(),
+        #overwrite=True,
+        max_trials=1,
+        max_model_size=321
+    )
 
+    if 1:
+        try:
+            clf.fit(
+                [item.reshape(ntr, series_len) for item in np.split(X_tr, 3, axis=2)], Y_tr,
+                validation_data=([item.reshape(nva, series_len) for item in np.split(X_va, 3, axis=2)], Y_va),
+                epochs=1000,
+                batch_size=64,
+                callbacks=[tf.keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)],
+                verbose=1
+            )
+        except:
+            pass
+
+    model = clf.export_model()
+    model.summary()
