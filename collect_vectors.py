@@ -34,8 +34,8 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--rate', help='Baud rate', default=115200, type=int)
     parser.add_argument('-s', '--start', help='Start marker', default=60, type=int)
     parser.add_argument('-e', '--end', help='End marker', default=62, type=int)
-    parser.add_argument('-n', '--nvectors', help='Number of vectors to record', default=100000, type=int)
-    parser.add_argument('-f', '--fpath', help='File path', default='data/adxl_fan/on_off/on_off.csv')
+    parser.add_argument('-n', '--nvectors', help='Number of vectors to record', default=10000, type=int)
+    parser.add_argument('-f', '--fpath', help='File path', default='data/adxl_fan/shake/shake.csv')
     args = parser.parse_args()
 
     sleep(5)
