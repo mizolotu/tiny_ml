@@ -158,25 +158,24 @@ if __name__ == '__main__':
     model = models.Sequential([
         layers.Input(shape=(n_features,)),
         layers.Dense(64, activation='relu'),
-        layers.Dropout(0.25),
+        layers.Dropout(0.5),
         layers.Dense(64, activation='relu'),
-        layers.Dropout(0.25),
+        layers.Dropout(0.5),
 
-        #layers.Reshape((31, 33, 1)),
+        #layers.Reshape((7, 33, 1)),
         #layers.Conv2D(32, 3, activation='relu'),
-        #layers.Dropout(0.25),
+        #layers.Dropout(0.5),
         #layers.Conv2D(32, 3, activation='relu'),
         #layers.MaxPooling2D(),
-        #layers.Dropout(0.25),
+        #layers.Dropout(0.5),
         #layers.Flatten(),
-
-        layers.Dense(num_labels)
+        #layers.Dense(num_labels)
     ])
 
     model.summary()
 
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
+        optimizer=tf.keras.optimizers.Adam(learning_rate=2.5e-4),
         loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=['accuracy'],
     )
