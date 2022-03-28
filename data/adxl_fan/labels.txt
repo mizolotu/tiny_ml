@@ -1,1 +1,1 @@
-normal,anomaly
+normal,shake,tape,stick

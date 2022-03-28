@@ -18,7 +18,7 @@ def get_waveform(file_path):
     waveform = np.clip(waveform, -32768, 32767)
     return waveform
 
-def interval_fix_fft(w, step, m, n_fft_features, fpath='fix_fft_32k_dll/fix_fft_32k.so'):
+def interval_fix_fft(w, step, m, n_fft_features, fpath='libraries/fix_fft_32k_dll/fix_fft_32k.so'):
     ff = cdll.LoadLibrary(fpath)
     ff.fix_fft.argtypes = [POINTER(c_short), POINTER(c_short), c_short, c_short]
     nsteps = len(w) // step
@@ -33,7 +33,10 @@ def interval_fix_fft(w, step, m, n_fft_features, fpath='fix_fft_32k_dll/fix_fft_
         for i in range(n_fft_features):
             s[i] = np.round(np.sqrt(re_c[i] * re_c[i] + im_c[i] * im_c[i]) // 2)
         return s
+    #print(intervals[0])
     mgn = map(fix_fft, intervals)
+    #print(intervals[0])
+    #print('------------------------------')
     return np.hstack(mgn)
 
 def get_spectrogram(waveform, input_len=15232):  # 15872
@@ -41,7 +44,10 @@ def get_spectrogram(waveform, input_len=15232):  # 15872
     zero_padding = np.zeros(input_len - len(waveform))
     equal_length = np.hstack([waveform, zero_padding])
     #spectrogram = interval_fix_fft(equal_length, 512, 6, 33)
+    print(equal_length)
     spectrogram = interval_fix_fft(equal_length, 2176, 6, 33)
+    print(spectrogram)
+    print('------------------------------')
     return spectrogram
 
 def equalize_numbers(X, Y):
@@ -87,7 +93,7 @@ if __name__ == '__main__':
 
     features_fpath = f'{DATASET_PATH}/features_nano.csv'
     minmax_fpath = f'{DATASET_PATH}/minmax_nano.csv'
-    silence_fpath = 'data/silence.csv'
+    silence_fpath = f'{DATASET_PATH}/silence.csv'
 
     # preprocess data
 
