@@ -44,10 +44,7 @@ def get_spectrogram(waveform, input_len=15232):  # 15872
     zero_padding = np.zeros(input_len - len(waveform))
     equal_length = np.hstack([waveform, zero_padding])
     #spectrogram = interval_fix_fft(equal_length, 512, 6, 33)
-    print(equal_length)
     spectrogram = interval_fix_fft(equal_length, 2176, 6, 33)
-    print(spectrogram)
-    print('------------------------------')
     return spectrogram
 
 def equalize_numbers(X, Y):
